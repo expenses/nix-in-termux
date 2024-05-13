@@ -67,51 +67,81 @@ if [ ! -x "$DIVE_SCRIPT" ]; then
 
 	case "$(uname -s).$(uname -m)" in
 		Linux.x86_64)
-			hash=afa6bf82bacb18ec0d6a1fd992b718192f895023d6cea8b94b2fb35fce352ff5
-			path=1sh0llzrvkah17hypza89fcd5bmm35cl/nix-2.13.3-x86_64-linux.tar.xz
+        hash=0a0f8380a581c98bc813e31b6b38ecbca075ef6be2c90b8da6c89766a7cd501d
+        path=ml60s224bjsc53jkdjr171kyi8g10kap/nix-2.22.1-x86_64-linux.tar.xz
 			system=x86_64-linux
 			;;
 		Linux.i?86)
-			hash=579a79a155c93c07f23e58de1dfa766d905239315b6b8c116e0ad7ffb7b14135
-			path=bg4vn61787q0l6wny81laa7al4sw5hda/nix-2.13.3-i686-linux.tar.xz
+        hash=ce359e545f3758e563d3bbd6668ab1b8028ab73336f4cdb7e29181e9b282c43b
+        path=n2dranancfhwiqc4nkc6k89z9aj45ppy/nix-2.22.1-i686-linux.tar.xz
 			system=i686-linux
 			;;
 		Linux.aarch64)
-			hash=dfbbaa86404c3efe74d87c8d4c39081affc673c8b5f64cfefc4ab0eaf84ed39b
-			path=zdq06xpx6a4a1hkaqcvjj9lbd7vqd9c3/nix-2.13.3-aarch64-linux.tar.xz
+        hash=3694481327ee34edb8aef1107bb7dd569a604b6707653e36802b9192d576c4df
+        path=8s8yqgs5iscyf56qg9cipgbykg9n7yx9/nix-2.22.1-aarch64-linux.tar.xz
 			system=aarch64-linux
 			;;
 		Linux.armv6l)
-			hash=debcb8a09744e83fca06efc6c5eee3f6066653da27dda8e0fb861e565b93f5f5
-			path=60gh3w8ikkhf547d3scyhsn7xlpp1k01/nix-2.13.3-armv6l-linux.tar.xz
+        hash=44aaaff746ca9da964f961d916c6d33820468cbfcb6f4323d394409b5b4ee5f6
+        path=0l0bxii1r4qn0byqhn4pws0ncjsvgrfv/nix-2.22.1-armv6l-linux.tar.xz
 			system=armv6l-linux
 			;;
 		Linux.armv7l)
-			hash=07a1e718e9ebfd11b0c8ba947029b5dc50a81f4e6f8ac5b8b8e3572e1ce436cb
-			path=cr6g8xc66yc02avw3ih4h96dbamqc3xw/nix-2.13.3-armv7l-linux.tar.xz
+        hash=59f624f7b2375a1acbb8e7bcffc35bdd6e588d374d026d1797deb53784200685
+        path=g3bx9fs23c7w2s0v063ik4n0g8mwac1j/nix-2.22.1-armv7l-linux.tar.xz
 			system=armv7l-linux
 			;;
 		Darwin.x86_64)
-			hash=2b036faeccdce4b6ba9ca4aa7971b49d13a1ee4ac13ea834fb24c4d0d7e8536a
-			path=s8yj3dnxmkk8ggzzymxwm1qb3s5hk133/nix-2.13.3-x86_64-darwin.tar.xz
+        hash=fc7415d8d28b94ff1959c3a670430b0c9804e5dcb281b1a36e8646860397e656
+        path=56iy2576f73v5yrcn6l8fqsz51mlf2dr/nix-2.22.1-x86_64-darwin.tar.xz
 			system=x86_64-darwin
 			;;
 		Darwin.arm64|Darwin.aarch64)
-			hash=200e777b541ddbadafdbe3817dba504754fa8fb0c9d1dd3f33dee6578045ab39
-			path=nh14dgrnxgd9dgg14bvbmi33dd5ipnml/nix-2.13.3-aarch64-darwin.tar.xz
+        hash=1cc1cb82e744e853b8d2c6fe075a1048c3600a404b4b8894ae892bf24258ca37
+        path=1c4gbsd8kmx2zkd2pasarmkvafcpwvsm/nix-2.22.1-aarch64-darwin.tar.xz
 			system=aarch64-darwin
 			;;
 		*) oops "sorry, there is no binary distribution of Nix for your platform";;
 	esac
 
-	url=https://releases.nixos.org/nix/nix-2.13.3/nix-2.13.3-$system.tar.xz
+# Use this command-line option to fetch the tarballs using nar-serve or Cachix
+if [ "${1:-}" = "--tarball-url-prefix" ]; then
+    if [ -z "${2:-}" ]; then
+        oops "missing argument for --tarball-url-prefix"
+    fi
+    url=${2}/${path}
+    shift 2
+else
+	url=https://releases.nixos.org/nix/nix-2.22.1/nix-2.22.1-$system.tar.xz
+fi
 
-	tarball=$tmpDir/nix-2.13.3-$system.tar.xz
+	tarball=$tmpDir/nix-2.22.1-$system.tar.xz
 
-	echo "downloading Nix 2.2.1 binary tarball for $system from '$url' to '$tmpDir'..."
-	$TERMUX_BIN/wget "$url" -O "$tarball" || oops "failed to download '$url'"
+require_util tar "unpack the binary tarball"
+if [ "$(uname -s)" != "Darwin" ]; then
+    require_util xz "unpack the binary tarball"
+fi
 
+if command -v curl > /dev/null 2>&1; then
+    fetch() { curl --fail -L "$1" -o "$2"; }
+elif command -v wget > /dev/null 2>&1; then
+    fetch() { wget "$1" -O "$2"; }
+else
+    oops "you don't have wget or curl installed, which I need to download the binary tarball"
+fi
+
+	echo "downloading Nix 2.22.1 binary tarball for $system from '$url' to '$tmpDir'..."
+fetch "$url" "$tarball" || oops "failed to download '$url'"
+
+if command -v sha256sum > /dev/null 2>&1; then
 	hash2="$(sha256sum -b "$tarball" | cut -c1-64)"
+elif command -v shasum > /dev/null 2>&1; then
+    hash2="$(shasum -a 256 -b "$tarball" | cut -c1-64)"
+elif command -v openssl > /dev/null 2>&1; then
+    hash2="$(openssl dgst -r -sha256 "$tarball" | cut -c1-64)"
+else
+    oops "cannot verify the SHA-256 hash of '$url'; you need one of 'shasum', 'sha256sum', or 'openssl'"
+fi
 
 	if [ "$hash" != "$hash2" ]; then
 		oops "SHA-256 hash mismatch in '$url'; expected $hash, got $hash2"
@@ -120,11 +150,7 @@ if [ ! -x "$DIVE_SCRIPT" ]; then
 	echo "unpacking $tarball..."
 	unpack=$tmpDir/unpack
 	mkdir -p "$unpack"
-	cleanup() {
-		rm -rf "$unpack"
-	}
-	trap cleanup EXIT INT QUIT TERM
-	< "$tarball" xzcat | $TERMUX_BIN/tar -xf - -C "$unpack" || oops "failed to unpack $tarball"
+tar -xJf "$tarball" -C "$unpack" || oops "failed to unpack '$url'"
 
 	script=$(echo "$unpack"/*/install)
 
