@@ -44,6 +44,10 @@ oops() {
     exit 1
 }
 
+require_util() {
+    command -v "$1" > /dev/null 2>&1 ||
+        oops "you do not have '$1' installed, which I need to $2"
+}
 
 if [ ! -x "$DIVE_SCRIPT" ]; then
 	echo "removing the previous installation..."
